@@ -9,14 +9,19 @@ class HumanVsHuman extends Component {
 
     state = {
         fen: "start",
+
         // square styles for active drop square
         dropSquareStyle: {},
+
         // custom square styles
         squareStyles: {},
+
         // square with the currently clicked piece
         pieceSquare: "",
+
         // currently clicked square
         square: "",
+
         // array of past game moves
         history: [],
     }
@@ -39,7 +44,7 @@ class HumanVsHuman extends Component {
                 ...a,
                 ...{
                     [c]: {
-                        background: "radial-gradient(circle, #fffc00 36%, transparent 40%)",
+                        background: "radial-gradient(circle, #fffc62 36%, transparent 40%)",
                         borderRadius: "50%",
                     },
                 },
@@ -65,6 +70,7 @@ class HumanVsHuman extends Component {
 
         // illegal move
         if (move === null) return
+
         this.setState(({ history, pieceSquare }) => ({
             fen: this.game.fen(),
             history: this.game.history({ verbose: true }),
@@ -72,7 +78,26 @@ class HumanVsHuman extends Component {
         }))
     }
 
-    onMouseOverSquare = (square) => {
+    // onMouseOverSquare = (square) => {
+    //     // get list of possible moves for this square
+    //     let moves = this.game.moves({
+    //         square: square,
+    //         verbose: true,
+    //     })
+    //     // console.log(this.game.moves);
+
+    //     // exit if there are no moves available for this square
+    //     if (moves.length === 0) return
+
+    //     let squaresToHighlight = []
+    //     for (var i = 0; i < moves.length; i++) {
+    //         squaresToHighlight.push(moves[i].to)
+    //     }
+
+    //     this.highlightSquare(square, squaresToHighlight)
+    // }
+
+    highlightPossibleMoves = (square) => {
         // get list of possible moves for this square
         let moves = this.game.moves({
             square: square,
@@ -90,7 +115,26 @@ class HumanVsHuman extends Component {
         this.highlightSquare(square, squaresToHighlight)
     }
 
-    onMouseOutSquare = (square) => this.removeHighlightSquare(square)
+    highlightMoves = (square) => {
+        // get list of possible moves for this square
+        let moves = this.game.moves({
+            square: square,
+            verbose: true,
+        })
+        // console.log(this.game.moves);
+
+        // exit if there are no moves available for this square
+        if (moves.length === 0) return
+
+        let squaresToHighlight = []
+        for (var i = 0; i < moves.length; i++) {
+            squaresToHighlight.push(moves[i].to)
+        }
+
+        this.highlightSquare(square, squaresToHighlight)
+    }
+
+    // onMouseOutSquare = (square) => this.removeHighlightSquare(square)
 
     // central squares get diff dropSquareStyles
     onDragOverSquare = (square) => {
@@ -101,14 +145,16 @@ class HumanVsHuman extends Component {
 
     onSquareClick = (square) => {
         this.setState(({ history }) => ({
-            squareStyles: squareStyling({ pieceSquare: square, history }),
+            squareStyles: squareStyling({ pieceSquare: move !== null ? square : "", history }),
             pieceSquare: square,
         }))
+
+        this.highlightMoves(square)
 
         let move = this.game.move({
             from: this.state.pieceSquare,
             to: square,
-            promotion: "q", // always promote to a queen for example simplicity
+            promotion: "k", //isPromote(this.state.pieceSquare, square), //this.props.testPopup(), // always promote to a queen for example simplicity
         })
 
         // illegal move
@@ -118,19 +164,26 @@ class HumanVsHuman extends Component {
             fen: this.game.fen(),
             history: this.game.history({ verbose: true }),
             pieceSquare: "",
+            // squareStyles: squareStyling({ pieceSquare: square, state.history }),
         })
     }
 
-    onSquareRightClick = (square) =>
+    onSquareRightClick = (square) => {
         this.setState({
             squareStyles: { [square]: { backgroundColor: "deepPink" } },
         })
+    }
+
+    // undoMove = () => {
+    //     this.chess.undo()
+    // }
 
     render() {
         const { fen, dropSquareStyle, squareStyles } = this.state
 
         return this.props.children({
             squareStyles,
+            width: 600,
             position: fen,
             onMouseOverSquare: this.onMouseOverSquare,
             onMouseOutSquare: this.onMouseOutSquare,
@@ -143,14 +196,18 @@ class HumanVsHuman extends Component {
     }
 }
 
-export default function WithMoveValidation() {
+export default function WithMoveValidation(props) {
     return (
         <div>
-            <HumanVsHuman>
-                {({ position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
+            <HumanVsHuman
+                testPopup={() => {
+                    props.togglePopup()
+                }}
+            >
+                {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
                     <Chessboard
                         id='humanVsHuman'
-                        width={320}
+                        width={width}
                         position={position}
                         onDrop={onDrop}
                         onMouseOverSquare={onMouseOverSquare}
@@ -179,13 +236,42 @@ const squareStyling = ({ pieceSquare, history }) => {
         [pieceSquare]: { backgroundColor: "rgba(255, 255, 0, 0.4)" },
         ...(history.length && {
             [sourceSquare]: {
-                backgroundColor: "rgba(255, 255, 0, 0.4)",
+                backgroundColor: "rgba(200, 100, 60, 0.5)",
             },
         }),
         ...(history.length && {
             [targetSquare]: {
-                backgroundColor: "rgba(255, 255, 0, 0.4)",
+                backgroundColor: "rgba(200, 100, 60, 0.5)",
+                // backgroundColor: "rgba(0, 255, 0, 0.4)",
             },
         }),
     }
 }
+
+// const chess = new Chess()
+
+// const isPromote = (from, to) => {
+//     const promotions = chess.moves({ verbose: true }).filter((m) => m.promotion)
+//     console.table(promotions)
+//     console.log(`${from}:${to}`)
+// }
+
+// is_promotion(cfg) {
+//     var piece = cfg.chess.get(cfg.move.from);
+//     if (
+//         cfg.chess.turn() == 'w' &&
+//         cfg.move.from.charAt(1) == 7 &&
+//         cfg.move.to.charAt(1) == 8 &&
+//         piece.type == 'p' &&
+//         piece.color == 'w'
+// //...
+// //analogical for black :)
+//     ) {
+//         var temp_chess(chess.fen());
+//         if ( temp_chess.move({from: cfg.move.from, to: cfg.move.to, promotion: 'q'}) ) {
+//                 return true;
+//         } else {
+//                 return false;
+//         }
+//     }
+// }
