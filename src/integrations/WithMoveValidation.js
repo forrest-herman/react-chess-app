@@ -1,4 +1,4 @@
-import React, { Component } from "react"
+import React, { Component, useState } from "react"
 import PropTypes from "prop-types"
 import Chess from "chess.js"
 
@@ -24,6 +24,9 @@ class HumanVsHuman extends Component {
 
         // array of past game moves
         history: [],
+
+        // current status of the game. Null if game_over() == false // REMOVE
+        gameStatus: null,
     }
 
     componentDidMount() {
@@ -75,6 +78,7 @@ class HumanVsHuman extends Component {
             fen: this.game.fen(),
             history: this.game.history({ verbose: true }),
             squareStyles: squareStyling({ pieceSquare, history }),
+            gameStatus: this.gameOverType(),
         }))
     }
 
@@ -164,6 +168,7 @@ class HumanVsHuman extends Component {
             fen: this.game.fen(),
             history: this.game.history({ verbose: true }),
             pieceSquare: "",
+            gameStatus: this.gameOverType(),
             // squareStyles: squareStyling({ pieceSquare: square, state.history }),
         })
     }
@@ -172,14 +177,43 @@ class HumanVsHuman extends Component {
         this.setState({
             squareStyles: { [square]: { backgroundColor: "deepPink" } },
         })
+        this.undoMove()
     }
 
-    // undoMove = () => {
-    //     this.chess.undo()
-    // }
+    undoMove = () => {
+        this.game.undo()
+        this.setState({
+            fen: this.game.fen(),
+            history: this.game.history({ verbose: true }),
+            pieceSquare: "",
+            // squareStyles: squareStyling({ pieceSquare: square, state.history }),
+            gameStatus: this.gameOverType(),
+        })
+    }
+
+    gameOverType = () => {
+        let gameState
+        if (this.game.game_over()) {
+            if (this.game.in_checkmate()) {
+                gameState = "Checkmate"
+            } else if (this.game.in_draw()) {
+                gameState = "Draw"
+            } else if (this.game.insufficient_material()) {
+                gameState = "Insufficient Material"
+            } else if (this.game.in_stalemate()) {
+                gameState = "White's Move - Stalemate" // stalemate logic
+            }
+        } else gameState = null
+
+        return gameState
+    }
 
     render() {
         const { fen, dropSquareStyle, squareStyles } = this.state
+
+        console.log(this.state.gameStatus)
+
+        // this.props.gameStatus = this.state.gameStatus
 
         return this.props.children({
             squareStyles,
@@ -197,12 +231,15 @@ class HumanVsHuman extends Component {
 }
 
 export default function WithMoveValidation(props) {
+    const [gameState, setGameState] = useState(null)
+
     return (
         <div>
             <HumanVsHuman
                 testPopup={() => {
                     props.togglePopup()
                 }}
+                gameStatus={gameState}
             >
                 {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
                     <Chessboard
@@ -224,6 +261,16 @@ export default function WithMoveValidation(props) {
                     />
                 )}
             </HumanVsHuman>
+            <div className='btn' onClick={() => setGameState("test")}>
+                <button>Undo</button>
+            </div>
+            <div>
+                <h2>White's Move (in check)</h2>
+                <p>or</p>
+                <h2>Game Over: Checkmate</h2>
+                <h2>Game Over: Draw</h2>
+                <h1>Game State: {gameState}</h1>
+            </div>
         </div>
     )
 }

@@ -18,16 +18,23 @@ class App extends Component {
         this.setState({ selectPiecePromotion: !this.state.selectPiecePromotion })
     }
 
+    // undoMove = () => {
+
+    // }
+
     render() {
         return (
             <div className='center'>
                 <h1>Chess App</h1>
                 <div className='btn' onClick={this.togglePromotionPopup}>
-                    <button>New User?</button>
+                    <button>Promote</button>
                 </div>
                 <div className='chessboard'>
                     <WithMoveValidation togglePopup={this.togglePromotionPopup} />
                 </div>
+                {/* <div className='btn' onClick={this.undoMove}>
+                    <button>Undo</button>
+                </div> */}
                 {this.state.selectPiecePromotion ? <PromotePopup togglePopup={this.togglePromotionPopup} /> : null}
             </div>
         )
