@@ -208,12 +208,15 @@ class HumanVsHuman extends Component {
         return gameState
     }
 
+    sendData = () => {
+        this.props.parentCallback(this.state.gameStatus) // thiiiiiiiiiissss
+    }
+
     render() {
         const { fen, dropSquareStyle, squareStyles } = this.state
 
+        this.sendData()
         console.log(this.state.gameStatus)
-
-        // this.props.gameStatus = this.state.gameStatus
 
         return this.props.children({
             squareStyles,
@@ -231,7 +234,11 @@ class HumanVsHuman extends Component {
 }
 
 export default function WithMoveValidation(props) {
-    const [gameState, setGameState] = useState(null)
+    const [gameState, setGameState] = useState("testing")
+
+    const callbackFunction = (childData) => {
+        setGameState(childData)
+    }
 
     return (
         <div>
@@ -240,6 +247,7 @@ export default function WithMoveValidation(props) {
                     props.togglePopup()
                 }}
                 gameStatus={gameState}
+                parentCallback={callbackFunction}
             >
                 {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
                     <Chessboard
