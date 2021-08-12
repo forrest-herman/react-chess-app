@@ -1,4 +1,4 @@
-import React, { Component, useState } from "react"
+import React, { Component, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import Chess from "chess.js"
 
@@ -31,6 +31,22 @@ class HumanVsHuman extends Component {
 
     componentDidMount() {
         this.game = new Chess()
+    }
+
+    updateBoard() {
+        this.setState({
+            fen: this.game.fen(),
+            history: this.game.history({ verbose: true }),
+            pieceSquare: "",
+            // squareStyles: squareStyling({ pieceSquare: square, state.history }),
+            gameStatus: this.gameOverType(),
+        })
+    }
+
+    setFen(fen) {
+        const loadSuccess = this.game.load(fen)
+        this.updateBoard()
+        return loadSuccess
     }
 
     // keep clicked square style and remove hint squares
@@ -158,7 +174,7 @@ class HumanVsHuman extends Component {
         let move = this.game.move({
             from: this.state.pieceSquare,
             to: square,
-            promotion: "k", //isPromote(this.state.pieceSquare, square), //this.props.testPopup(), // always promote to a queen for example simplicity
+            promotion: "q", //isPromote(this.state.pieceSquare, square), //this.props.testPopup(), // always promote to a queen for example simplicity
         })
 
         // illegal move
@@ -177,7 +193,15 @@ class HumanVsHuman extends Component {
         this.setState({
             squareStyles: { [square]: { backgroundColor: "deepPink" } },
         })
-        this.undoMove()
+        //test
+        this.game.load("4k3/4P3/4Q3/8/8/8/3K4/8 w - - 0 78")
+        this.setState({
+            fen: this.game.fen(),
+            history: this.game.history({ verbose: true }),
+            pieceSquare: "",
+            // squareStyles: squareStyling({ pieceSquare: square, state.history }),
+            gameStatus: this.gameOverType(),
+        })
     }
 
     undoMove = () => {
@@ -191,32 +215,40 @@ class HumanVsHuman extends Component {
         })
     }
 
+    // useImperativeHandle(this.props.ref, () => ({
+    //     getAlert() {
+    //         alert("getAlert from Child")
+    //     }
+    // }))
+
     gameOverType = () => {
         let gameState
         if (this.game.game_over()) {
             if (this.game.in_checkmate()) {
                 gameState = "Checkmate"
             } else if (this.game.in_draw()) {
-                gameState = "Draw"
-            } else if (this.game.insufficient_material()) {
-                gameState = "Insufficient Material"
-            } else if (this.game.in_stalemate()) {
-                gameState = "White's Move - Stalemate" // stalemate logic
+                if (this.game.in_stalemate()) {
+                    if (this.game.turn() === "w") {
+                        gameState = "White's Move - Stalemate" // stalemate logic
+                    } else gameState = "Black's Move - Stalemate" // stalemate logic
+                } else if (this.game.insufficient_material()) {
+                    gameState = "Draw - Insufficient Material"
+                }
             }
         } else gameState = null
 
         return gameState
     }
 
-    sendData = () => {
-        this.props.parentCallback(this.state.gameStatus) // thiiiiiiiiiissss
+    sendGameState = () => {
+        this.props.setGameState_parentCallback(this.state.gameStatus) // takes a values and sends it to the parent
     }
 
     render() {
         const { fen, dropSquareStyle, squareStyles } = this.state
 
-        this.sendData()
-        console.log(this.state.gameStatus)
+        this.sendGameState()
+        // console.log(this.state.gameStatus)
 
         return this.props.children({
             squareStyles,
@@ -234,9 +266,12 @@ class HumanVsHuman extends Component {
 }
 
 export default function WithMoveValidation(props) {
-    const [gameState, setGameState] = useState("testing")
+    const childRef = useRef()
+    const fenRef = useRef()
 
-    const callbackFunction = (childData) => {
+    const [gameState, setGameState] = useState(null)
+
+    const setGameState_callbackFunction = (childData) => {
         setGameState(childData)
     }
 
@@ -246,8 +281,9 @@ export default function WithMoveValidation(props) {
                 testPopup={() => {
                     props.togglePopup()
                 }}
-                gameStatus={gameState}
-                parentCallback={callbackFunction}
+                gameStatus={gameState} // removeeeeeeeee
+                setGameState_parentCallback={setGameState_callbackFunction}
+                ref={childRef}
             >
                 {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
                     <Chessboard
@@ -269,15 +305,31 @@ export default function WithMoveValidation(props) {
                     />
                 )}
             </HumanVsHuman>
-            <div className='btn' onClick={() => setGameState("test")}>
-                <button>Undo</button>
+            <div
+                className='btn'
+                onClick={() => {
+                    if (childRef.current) {
+                        childRef.current.undoMove()
+                    }
+                }}
+            >
+                <button>Undo Move</button>
             </div>
             <div>
                 <h2>White's Move (in check)</h2>
-                <p>or</p>
-                <h2>Game Over: Checkmate</h2>
-                <h2>Game Over: Draw</h2>
                 <h1>Game State: {gameState}</h1>
+                <h4>Fen input:</h4>
+                <input type='text' ref={fenRef} />
+                <button
+                    onClick={() => {
+                        if (childRef.current) {
+                            childRef.current.setFen(fenRef.current.value) ? (fenRef.current.value = null) : console.log("Load Failed - INVALID FEN")
+                        }
+                    }}
+                >
+                    Set Fen
+                </button>
+                <p>BOOL Invalid FEN</p>
             </div>
         </div>
     )
