@@ -1,6 +1,9 @@
 import React, { Component, useState, useRef } from "react"
 import PropTypes from "prop-types"
 import Chess from "chess.js"
+import "../App.css"
+
+import PromotePopup from "../elements/PromotePopup"
 
 import Chessboard from "chessboardjsx"
 
@@ -25,8 +28,8 @@ class HumanVsHuman extends Component {
         // array of past game moves
         history: [],
 
-        // current status of the game. Null if game_over() == false // REMOVE
-        gameStatus: null,
+        // current status of the game
+        gameStatus: "New Game: White's Move",
     }
 
     componentDidMount() {
@@ -171,14 +174,23 @@ class HumanVsHuman extends Component {
 
         this.highlightMoves(square)
 
+        // promotion logic
+        if (this.isPromoting(this.state.pieceSquare, square)) {
+            console.log("promote")
+            this.props.togglePromote()
+            console.log(this.props.promoteType)
+        }
+
         let move = this.game.move({
             from: this.state.pieceSquare,
             to: square,
-            promotion: "q", //isPromote(this.state.pieceSquare, square), //this.props.testPopup(), // always promote to a queen for example simplicity
+            promotion: this.props.promoteType, //isPromote(this.state.pieceSquare, square), //this.props.testPopup(), // always promote to a queen for example simplicity
         })
 
         // illegal move
         if (move === null) return
+
+        // this.game.move.promotion = promotionType
 
         this.setState({
             fen: this.game.fen(),
@@ -187,6 +199,37 @@ class HumanVsHuman extends Component {
             gameStatus: this.gameOverType(),
             // squareStyles: squareStyling({ pieceSquare: square, state.history }),
         })
+    }
+
+    isPromoting(from, to) {
+        const chess = this.game
+        const piece = chess.get(from)
+
+        // let move = chess.move({
+        //     from: from,
+        //     to: to,
+        //     promotion: "q",
+        // })
+        // // illegal move
+        // if (move === null) return false
+
+        if (piece?.type !== "p") {
+            // console.log("not pawn")
+            return false
+        }
+        if (piece.color !== chess.turn()) {
+            // console.log("wrong color")
+            return false
+        }
+        if (!["1", "8"].some((it) => to.endsWith(it))) {
+            // console.log("wrong position")
+            return false
+        }
+        return true
+        // return chess
+        //   .moves({ square: move.from, verbose: true })
+        //   .map((it) => it.to)
+        //   .includes(move.to);
     }
 
     onSquareRightClick = (square) => {
@@ -225,17 +268,27 @@ class HumanVsHuman extends Component {
         let gameState
         if (this.game.game_over()) {
             if (this.game.in_checkmate()) {
-                gameState = "Checkmate"
+                if (this.game.turn() === "w") {
+                    gameState = "Checkmate - Black Wins" //checkmate logic
+                } else gameState = "Checkmate - White Wins"
             } else if (this.game.in_draw()) {
                 if (this.game.in_stalemate()) {
                     if (this.game.turn() === "w") {
                         gameState = "White's Move - Stalemate" // stalemate logic
-                    } else gameState = "Black's Move - Stalemate" // stalemate logic
+                    } else gameState = "Black's Move - Stalemate"
                 } else if (this.game.insufficient_material()) {
                     gameState = "Draw - Insufficient Material"
                 }
             }
-        } else gameState = null
+        } else if (this.game.in_check()) {
+            if (this.game.turn() === "w") {
+                gameState = "White's Move (in check)"
+            } else gameState = "Black's Move (in check)"
+        } else {
+            if (this.game.turn() === "w") {
+                gameState = "White's Move"
+            } else gameState = "Black's Move"
+        }
 
         return gameState
     }
@@ -269,57 +322,72 @@ export default function WithMoveValidation(props) {
     const childRef = useRef()
     const fenRef = useRef()
 
-    const [gameState, setGameState] = useState(null)
+    const [gameState, setGameState] = useState("")
+    const [selectPiecePromotion, setSelectPiecePromotion] = useState(false)
+    const [promoteType, setpromoteType] = useState("q")
 
     const setGameState_callbackFunction = (childData) => {
         setGameState(childData)
     }
 
+    const handle_setPromoteType = (type) => {
+        setpromoteType(type)
+        console.log(promoteType)
+    }
+
+    const togglePromotionPopup = () => {
+        setSelectPiecePromotion(!selectPiecePromotion)
+    }
+
     return (
         <div>
-            <HumanVsHuman
-                testPopup={() => {
-                    props.togglePopup()
-                }}
-                gameStatus={gameState} // removeeeeeeeee
-                setGameState_parentCallback={setGameState_callbackFunction}
-                ref={childRef}
-            >
-                {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
-                    <Chessboard
-                        id='humanVsHuman'
-                        width={width}
-                        position={position}
-                        onDrop={onDrop}
-                        onMouseOverSquare={onMouseOverSquare}
-                        onMouseOutSquare={onMouseOutSquare}
-                        boardStyle={{
-                            borderRadius: "5px",
-                            boxShadow: `0 5px 15px rgba(0, 0, 0, 0.5)`,
-                        }}
-                        squareStyles={squareStyles}
-                        dropSquareStyle={dropSquareStyle}
-                        onDragOverSquare={onDragOverSquare}
-                        onSquareClick={onSquareClick}
-                        onSquareRightClick={onSquareRightClick}
-                    />
-                )}
-            </HumanVsHuman>
-            <div
-                className='btn'
-                onClick={() => {
-                    if (childRef.current) {
-                        childRef.current.undoMove()
-                    }
-                }}
-            >
-                <button>Undo Move</button>
+            <div className='chessboard-board'>
+                <HumanVsHuman
+                    testPopup={() => {
+                        props.togglePopup()
+                    }}
+                    setGameState_parentCallback={setGameState_callbackFunction}
+                    ref={childRef}
+                    togglePromote={togglePromotionPopup}
+                    promoteType={promoteType}
+                >
+                    {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
+                        <Chessboard
+                            id='humanVsHuman'
+                            width={width}
+                            position={position}
+                            onDrop={onDrop}
+                            onMouseOverSquare={onMouseOverSquare}
+                            onMouseOutSquare={onMouseOutSquare}
+                            boardStyle={{
+                                borderRadius: "5px",
+                                boxShadow: `0 5px 15px rgba(0, 0, 0, 0.5)`,
+                            }}
+                            squareStyles={squareStyles}
+                            dropSquareStyle={dropSquareStyle}
+                            onDragOverSquare={onDragOverSquare}
+                            onSquareClick={onSquareClick}
+                            onSquareRightClick={onSquareRightClick}
+                        />
+                    )}
+                </HumanVsHuman>
             </div>
             <div>
-                <h2>White's Move (in check)</h2>
-                <h1>Game State: {gameState}</h1>
+                <h1>{gameState}</h1>
+
+                <div className='btn'>
+                    <button
+                        onClick={() => {
+                            if (childRef.current) {
+                                childRef.current.undoMove()
+                            }
+                        }}
+                    >
+                        Undo Move
+                    </button>
+                </div>
                 <h4>Fen input:</h4>
-                <input type='text' ref={fenRef} />
+                <input type='text' ref={fenRef} placeholder='Enter valid FEN here' />
                 <button
                     onClick={() => {
                         if (childRef.current) {
@@ -329,7 +397,8 @@ export default function WithMoveValidation(props) {
                 >
                     Set Fen
                 </button>
-                <p>BOOL Invalid FEN</p>
+                {/* <p>BOOL Invalid FEN</p> */}
+                {selectPiecePromotion ? <PromotePopup togglePopup={togglePromotionPopup} setPromote={handle_setPromoteType} /> : null}
             </div>
         </div>
     )

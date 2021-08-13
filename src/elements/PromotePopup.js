@@ -12,10 +12,17 @@ export default class PromotePopup extends Component {
                         &times;{" "}
                     </span>
                     <p>Promote your pawn:</p>
-                    <button>Queen</button>
-                    <button>Rook</button>
-                    <button>Bishop</button>
-                    <button>Knight</button>
+                    <button
+                        onClick={() => {
+                            this.props.setPromote("q")
+                            this.props.togglePopup()
+                        }}
+                    >
+                        Queen
+                    </button>
+                    <button onClick={() => console.log("Promote to rook")}>Rook</button>
+                    <button onClick={() => console.log("Promote to bishop")}>Bishop</button>
+                    <button onClick={() => this.props.setPromote("n")}>Knight</button>
                 </div>
             </div>
         )
