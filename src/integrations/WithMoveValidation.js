@@ -190,6 +190,10 @@ class HumanVsHuman extends Component {
         // illegal move
         if (move === null) return
 
+        console.log(this.state.pieceSquare)
+        console.log(square)
+        console.log(this.game.get(square))
+
         // this.game.move.promotion = promotionType
 
         this.setState({
@@ -225,11 +229,11 @@ class HumanVsHuman extends Component {
             // console.log("wrong position")
             return false
         }
-        return true
-        // return chess
-        //   .moves({ square: move.from, verbose: true })
-        //   .map((it) => it.to)
-        //   .includes(move.to);
+        // return true
+        return chess
+            .moves({ square: from, verbose: true })
+            .map((it) => it.to)
+            .includes(to)
     }
 
     onSquareRightClick = (square) => {

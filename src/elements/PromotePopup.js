@@ -20,9 +20,30 @@ export default class PromotePopup extends Component {
                     >
                         Queen
                     </button>
-                    <button onClick={() => console.log("Promote to rook")}>Rook</button>
-                    <button onClick={() => console.log("Promote to bishop")}>Bishop</button>
-                    <button onClick={() => this.props.setPromote("n")}>Knight</button>
+                    <button
+                        onClick={() => {
+                            this.props.setPromote("r")
+                            this.props.togglePopup()
+                        }}
+                    >
+                        Rook
+                    </button>
+                    <button
+                        onClick={() => {
+                            this.props.setPromote("b")
+                            this.props.togglePopup()
+                        }}
+                    >
+                        Bishop
+                    </button>
+                    <button
+                        onClick={() => {
+                            this.props.setPromote("n")
+                            this.props.togglePopup()
+                        }}
+                    >
+                        Knight
+                    </button>
                 </div>
             </div>
         )
