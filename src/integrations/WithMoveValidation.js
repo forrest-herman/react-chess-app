@@ -174,25 +174,27 @@ class HumanVsHuman extends Component {
 
         this.highlightMoves(square)
 
+        let promoteType = "q"
+
         // promotion logic
         if (this.isPromoting(this.state.pieceSquare, square)) {
             console.log("promote")
-            this.props.togglePromote()
-            console.log(this.props.promoteType)
+            promoteType = this.props.showModalTest()
+            // this.props.togglePromote()
+            console.log(promoteType)
         }
-
         let move = this.game.move({
             from: this.state.pieceSquare,
             to: square,
-            promotion: this.props.promoteType, //isPromote(this.state.pieceSquare, square), //this.props.testPopup(), // always promote to a queen for example simplicity
+            promotion: promoteType, //isPromote(this.state.pieceSquare, square), //this.props.testPopup(), // always promote to a queen for example simplicity
         })
 
         // illegal move
         if (move === null) return
 
-        console.log(this.state.pieceSquare)
-        console.log(square)
-        console.log(this.game.get(square))
+        // console.log(this.state.pieceSquare)
+        // console.log(square)
+        // console.log(this.game.get(square))
 
         // this.game.move.promotion = promotionType
 
@@ -203,6 +205,8 @@ class HumanVsHuman extends Component {
             gameStatus: this.gameOverType(),
             // squareStyles: squareStyling({ pieceSquare: square, state.history }),
         })
+
+        console.log(this.game.fen()) //temp
     }
 
     isPromoting(from, to) {
@@ -326,6 +330,8 @@ export default function WithMoveValidation(props) {
     const childRef = useRef()
     const fenRef = useRef()
 
+    const modalRef = useRef()
+
     const [gameState, setGameState] = useState("")
     const [selectPiecePromotion, setSelectPiecePromotion] = useState(false)
     const [promoteType, setpromoteType] = useState("q")
@@ -343,18 +349,49 @@ export default function WithMoveValidation(props) {
         setSelectPiecePromotion(!selectPiecePromotion)
     }
 
+    const showModal = () => {
+        const modal = modalRef.current
+        let result
+        setTimeout(async () => {
+            try {
+                // Wait user to confirm !
+                result = await modal.show()
+
+                switch (result) {
+                    case "q":
+                        alert("Promote to Queen?")
+                        break
+
+                    case "r":
+                        alert("Promote to Rook?")
+                        break
+
+                    case "b":
+                        alert("Promote to Bishop?")
+                        break
+
+                    case "n":
+                        alert("Promote to Knight?")
+                        break
+
+                    default:
+                        alert("No piece chosen!")
+                }
+
+                console.log("Promote to: " + result)
+                return result
+            } catch (err) {
+                alert("CANCEL")
+            }
+        }, 100)
+        console.log("Waiting user for confirmation ...")
+        return "q"
+    }
+
     return (
         <div>
             <div className='chessboard-board'>
-                <HumanVsHuman
-                    testPopup={() => {
-                        props.togglePopup()
-                    }}
-                    setGameState_parentCallback={setGameState_callbackFunction}
-                    ref={childRef}
-                    togglePromote={togglePromotionPopup}
-                    promoteType={promoteType}
-                >
+                <HumanVsHuman setGameState_parentCallback={setGameState_callbackFunction} ref={childRef} togglePromote={togglePromotionPopup} showModalTest={showModal} promoteType={promoteType}>
                     {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
                         <Chessboard
                             id='humanVsHuman'
@@ -390,7 +427,9 @@ export default function WithMoveValidation(props) {
                         Undo Move
                     </button>
                 </div>
-                <h4>Fen input:</h4>
+                <h4>
+                    Fen input: <br></br>rnbqk2r/pp2P2p/2pP2pn/8/1b3p2/8/PPPQ1PPP/RNB1KBNR w KQkq - 1 9
+                </h4>
                 <input type='text' ref={fenRef} placeholder='Enter valid FEN here' />
                 <button
                     onClick={() => {
@@ -402,7 +441,8 @@ export default function WithMoveValidation(props) {
                     Set Fen
                 </button>
                 {/* <p>BOOL Invalid FEN</p> */}
-                {selectPiecePromotion ? <PromotePopup togglePopup={togglePromotionPopup} setPromote={handle_setPromoteType} /> : null}
+                {/* {selectPiecePromotion ? <PromotePopup ref={modalRef} togglePopup={togglePromotionPopup} setPromote={handle_setPromoteType} /> : null} */}
+                <PromotePopup ref={modalRef} togglePopup={togglePromotionPopup} setPromote={handle_setPromoteType} />
             </div>
         </div>
     )
