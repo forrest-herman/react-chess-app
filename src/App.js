@@ -2,7 +2,7 @@ import React, { Component } from "react"
 import "./App.css"
 
 import WithMoveValidation from "./integrations/WithMoveValidation"
-import PromotePopup from "./elements/PromotePopup"
+// import PromotePopup from "./elements/PromotePopup"
 
 // import Chessboard from "chessboardjsx"
 // import { ChessInstance } from "chess.js"
@@ -10,32 +10,20 @@ import PromotePopup from "./elements/PromotePopup"
 // const Chess = require("chess.js")
 
 class App extends Component {
-    state = {
-        selectPiecePromotion: false,
-    }
-
-    togglePromotionPopup = () => {
-        this.setState({ selectPiecePromotion: !this.state.selectPiecePromotion })
-    }
-
-    // undoMove = () => {
-
+    // state = {
+    //     selectPiecePromotion: false,
     // }
 
+    // togglePromotionPopup = () => {
+    //     this.setState({ selectPiecePromotion: !this.state.selectPiecePromotion })
+    // }
     render() {
         return (
             <div className='center'>
                 <h1>Chess App</h1>
-                <div className='btn' onClick={this.togglePromotionPopup}>
-                    <button>Promote</button>
-                </div>
                 <div className='chessboard'>
-                    <WithMoveValidation togglePopup={this.togglePromotionPopup} />
+                    <WithMoveValidation />
                 </div>
-                {/* <div className='btn' onClick={this.undoMove}>
-                    <button>Undo</button>
-                </div> */}
-                {this.state.selectPiecePromotion ? <PromotePopup togglePopup={this.togglePromotionPopup} /> : null}
             </div>
         )
     }
