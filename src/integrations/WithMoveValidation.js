@@ -30,10 +30,29 @@ class HumanVsHuman extends Component {
 
         // current status of the game
         gameStatus: "New Game: White's Move",
+
+        gameModeTracker: null,
     }
 
     componentDidMount() {
         this.game = new Chess()
+    }
+
+    componentWillUnmount() {
+        if (this.props.gameMode === 0) {
+            window.clearTimeout(this.timer())
+        }
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (this.props.gameMode === 0 && prevState.gameModeTracker !== 0) {
+            this.setState({
+                gameModeTracker: this.props.gameMode,
+            })
+            setTimeout(() => this.pcVpc(), 2000)
+        } else {
+            window.clearTimeout(this.timer())
+        }
     }
 
     updateBoard() {
@@ -167,6 +186,7 @@ class HumanVsHuman extends Component {
     }
 
     onSquareClick = (square) => {
+        if (this.game.game_over()) return
         this.setState(({ history }) => ({
             squareStyles: squareStyling({ pieceSquare: move !== null ? square : "", history }),
             pieceSquare: square,
@@ -207,6 +227,11 @@ class HumanVsHuman extends Component {
         })
 
         console.log(this.game.fen()) //temp
+
+        // random computer move
+        if (this.props.gameMode === 1) {
+            window.setTimeout(this.makeRandomMove(), 1000)
+        }
     }
 
     isPromoting(from, to) {
@@ -244,15 +269,6 @@ class HumanVsHuman extends Component {
         this.setState({
             squareStyles: { [square]: { backgroundColor: "deepPink" } },
         })
-        //test
-        this.game.load("4k3/4P3/4Q3/8/8/8/3K4/8 w - - 0 78")
-        this.setState({
-            fen: this.game.fen(),
-            history: this.game.history({ verbose: true }),
-            pieceSquare: "",
-            // squareStyles: squareStyling({ pieceSquare: square, state.history }),
-            gameStatus: this.gameOverType(),
-        })
     }
 
     undoMove = () => {
@@ -264,6 +280,30 @@ class HumanVsHuman extends Component {
             // squareStyles: squareStyling({ pieceSquare: square, state.history }),
             gameStatus: this.gameOverType(),
         })
+    }
+
+    timer = () => window.setTimeout(() => this.pcVpc(), 2000)
+
+    pcVpc() {
+        this.makeRandomMove()
+        this.timer()
+    }
+
+    makeRandomMove() {
+        var possibleMoves = this.game.moves()
+
+        // game over
+        if (this.game.game_over() === true || this.game.in_draw() === true || possibleMoves.length === 0) return
+        console.log(possibleMoves)
+        var randomIndex = Math.floor(Math.random() * possibleMoves.length)
+        this.game.move(possibleMoves[randomIndex])
+        // this.setState(({ history, pieceSquare }) => ({
+        //     fen: this.game.fen(),
+        //     history: this.game.history({ verbose: true }),
+        //     squareStyles: squareStyling({ pieceSquare, history }),
+        //     gameStatus: this.gameOverType(),
+        // }))
+        this.setState({ fen: this.game.fen() })
     }
 
     // useImperativeHandle(this.props.ref, () => ({
@@ -329,12 +369,13 @@ class HumanVsHuman extends Component {
 export default function WithMoveValidation(props) {
     const childRef = useRef()
     const fenRef = useRef()
-
     const modalRef = useRef()
 
+    const [gameMode, setgameMode] = useState(2) // 0 -> CvC || 1 -> CvH || 2 -> HvH
     const [gameState, setGameState] = useState("")
     const [selectPiecePromotion, setSelectPiecePromotion] = useState(false)
     const [promoteType, setpromoteType] = useState("q")
+    const [boardOrientation, setboardOrientation] = useState("white")
 
     const setGameState_callbackFunction = (childData) => {
         setGameState(childData)
@@ -390,8 +431,38 @@ export default function WithMoveValidation(props) {
 
     return (
         <div>
+            <div>
+                <button
+                    onClick={() => {
+                        setgameMode(0)
+                    }}
+                >
+                    PC vs PC
+                </button>
+                <button
+                    onClick={() => {
+                        setgameMode(1)
+                    }}
+                >
+                    PC vs Human
+                </button>
+                <button
+                    onClick={() => {
+                        setgameMode(2)
+                    }}
+                >
+                    Human vs Human
+                </button>
+            </div>
             <div className='chessboard-board'>
-                <HumanVsHuman setGameState_parentCallback={setGameState_callbackFunction} ref={childRef} togglePromote={togglePromotionPopup} showModalTest={showModal} promoteType={promoteType}>
+                <HumanVsHuman
+                    gameMode={gameMode}
+                    setGameState_parentCallback={setGameState_callbackFunction}
+                    ref={childRef}
+                    togglePromote={togglePromotionPopup}
+                    showModalTest={showModal}
+                    promoteType={promoteType}
+                >
                     {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
                         <Chessboard
                             id='humanVsHuman'
@@ -409,6 +480,7 @@ export default function WithMoveValidation(props) {
                             onDragOverSquare={onDragOverSquare}
                             onSquareClick={onSquareClick}
                             onSquareRightClick={onSquareRightClick}
+                            orientation={boardOrientation}
                         />
                     )}
                 </HumanVsHuman>
@@ -425,6 +497,15 @@ export default function WithMoveValidation(props) {
                         }}
                     >
                         Undo Move
+                    </button>
+                </div>
+                <div className='btn'>
+                    <button
+                        onClick={() => {
+                            boardOrientation === "white" ? setboardOrientation("black") : setboardOrientation("white")
+                        }}
+                    >
+                        🔄 Rotate Board
                     </button>
                 </div>
                 <h4>
