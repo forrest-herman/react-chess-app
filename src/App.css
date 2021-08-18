@@ -56,7 +56,7 @@
 }
 
 input {
-    border-radius: 1rem;
+    border-radius: 0.75rem;
     border: 1px solid var(--color1);
     padding: 1rem;
 }
@@ -70,12 +70,16 @@ input:focus-visible {
 
 button {
     padding: 1rem;
+    margin: 0.5rem;
     border: none;
-    border-radius: 1rem;
+    border-radius: 0.75rem;
     background-color: var(--color1);
 }
 button:hover {
     cursor: pointer;
+}
+button.active {
+    background-color: grey;
 }
 
 .chessboard-board {
@@ -108,3 +112,34 @@ button:hover {
     user-select: none;
     background-color: #61dafb !important;
 } */
+
+/* Spinner */
+/* Rotating border */
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes spinner-grow {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.spinner-border {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    vertical-align: text-bottom;
+    border: 0.25em solid;
+    border-right: 0.25em solid transparent;
+    border-radius: 50%;
+    -webkit-animation: spinner-border 0.75s linear infinite;
+    animation: spinner-border 0.75s linear infinite;
+}

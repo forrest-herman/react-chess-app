@@ -7,6 +7,9 @@ import PromotePopup from "../elements/PromotePopup"
 
 import Chessboard from "chessboardjsx"
 
+const STOCKFISH = window.STOCKFISH
+const game = new Chess()
+
 class HumanVsHuman extends Component {
     static propTypes = { children: PropTypes.func }
 
@@ -35,7 +38,11 @@ class HumanVsHuman extends Component {
     }
 
     componentDidMount() {
-        this.game = new Chess()
+        // this.game = new Chess()
+
+        // stockfish
+        this.setState({ fen: game.fen() })
+        this.engineGame().prepareMove()
     }
 
     componentWillUnmount() {
@@ -52,13 +59,18 @@ class HumanVsHuman extends Component {
             setTimeout(() => this.pcVpc(), 2000)
         } else {
             window.clearTimeout(this.timer())
+            if (prevState.gameModeTracker !== prevProps.gameMode) {
+                this.setState({
+                    gameModeTracker: this.props.gameMode,
+                })
+            }
         }
     }
 
     updateBoard() {
         this.setState({
-            fen: this.game.fen(),
-            history: this.game.history({ verbose: true }),
+            fen: game.fen(),
+            history: game.history({ verbose: true }),
             pieceSquare: "",
             // squareStyles: squareStyling({ pieceSquare: square, state.history }),
             gameStatus: this.gameOverType(),
@@ -66,7 +78,7 @@ class HumanVsHuman extends Component {
     }
 
     setFen(fen) {
-        const loadSuccess = this.game.load(fen)
+        const loadSuccess = game.load(fen)
         this.updateBoard()
         return loadSuccess
     }
@@ -103,7 +115,7 @@ class HumanVsHuman extends Component {
 
     onDrop = ({ sourceSquare, targetSquare }) => {
         // see if the move is legal
-        let move = this.game.move({
+        let move = game.move({
             from: sourceSquare,
             to: targetSquare,
             promotion: "q", // always promote to a queen for example simplicity
@@ -112,21 +124,31 @@ class HumanVsHuman extends Component {
         // illegal move
         if (move === null) return
 
-        this.setState(({ history, pieceSquare }) => ({
-            fen: this.game.fen(),
-            history: this.game.history({ verbose: true }),
-            squareStyles: squareStyling({ pieceSquare, history }),
-            gameStatus: this.gameOverType(),
-        }))
+        // this.setState(({ history, pieceSquare }) => ({
+        //     fen: game.fen(),
+        //     history: game.history({ verbose: true }),
+        //     squareStyles: squareStyling({ pieceSquare, history }),
+        //     gameStatus: this.gameOverType(),
+        // }))
+
+        return new Promise((resolve) => {
+            this.setState(({ history, pieceSquare }) => ({
+                fen: game.fen(),
+                history: game.history({ verbose: true }),
+                squareStyles: squareStyling({ pieceSquare, history }),
+                gameStatus: this.gameOverType(),
+            }))
+            resolve()
+        }).then(() => this.engineGame().prepareMove())
     }
 
     // onMouseOverSquare = (square) => {
     //     // get list of possible moves for this square
-    //     let moves = this.game.moves({
+    //     let moves = game.moves({
     //         square: square,
     //         verbose: true,
     //     })
-    //     // console.log(this.game.moves);
+    //     // console.log(game.moves);
 
     //     // exit if there are no moves available for this square
     //     if (moves.length === 0) return
@@ -141,7 +163,7 @@ class HumanVsHuman extends Component {
 
     highlightPossibleMoves = (square) => {
         // get list of possible moves for this square
-        let moves = this.game.moves({
+        let moves = game.moves({
             square: square,
             verbose: true,
         })
@@ -159,11 +181,11 @@ class HumanVsHuman extends Component {
 
     highlightMoves = (square) => {
         // get list of possible moves for this square
-        let moves = this.game.moves({
+        let moves = game.moves({
             square: square,
             verbose: true,
         })
-        // console.log(this.game.moves);
+        // console.log(game.moves);
 
         // exit if there are no moves available for this square
         if (moves.length === 0) return
@@ -186,7 +208,7 @@ class HumanVsHuman extends Component {
     }
 
     onSquareClick = (square) => {
-        if (this.game.game_over()) return
+        if (game.game_over()) return
         this.setState(({ history }) => ({
             squareStyles: squareStyling({ pieceSquare: move !== null ? square : "", history }),
             pieceSquare: square,
@@ -203,7 +225,7 @@ class HumanVsHuman extends Component {
             // this.props.togglePromote()
             console.log(promoteType)
         }
-        let move = this.game.move({
+        let move = game.move({
             from: this.state.pieceSquare,
             to: square,
             promotion: promoteType, //isPromote(this.state.pieceSquare, square), //this.props.testPopup(), // always promote to a queen for example simplicity
@@ -214,19 +236,19 @@ class HumanVsHuman extends Component {
 
         // console.log(this.state.pieceSquare)
         // console.log(square)
-        // console.log(this.game.get(square))
+        // console.log(game.get(square))
 
-        // this.game.move.promotion = promotionType
+        // game.move.promotion = promotionType
 
         this.setState({
-            fen: this.game.fen(),
-            history: this.game.history({ verbose: true }),
+            fen: game.fen(),
+            history: game.history({ verbose: true }),
             pieceSquare: "",
             gameStatus: this.gameOverType(),
             // squareStyles: squareStyling({ pieceSquare: square, state.history }),
         })
 
-        console.log(this.game.fen()) //temp
+        console.log(game.fen()) //temp
 
         // random computer move
         if (this.props.gameMode === 1) {
@@ -235,7 +257,7 @@ class HumanVsHuman extends Component {
     }
 
     isPromoting(from, to) {
-        const chess = this.game
+        const chess = game
         const piece = chess.get(from)
 
         // let move = chess.move({
@@ -272,10 +294,10 @@ class HumanVsHuman extends Component {
     }
 
     undoMove = () => {
-        this.game.undo()
+        game.undo()
         this.setState({
-            fen: this.game.fen(),
-            history: this.game.history({ verbose: true }),
+            fen: game.fen(),
+            history: game.history({ verbose: true }),
             pieceSquare: "",
             // squareStyles: squareStyling({ pieceSquare: square, state.history }),
             gameStatus: this.gameOverType(),
@@ -286,24 +308,31 @@ class HumanVsHuman extends Component {
 
     pcVpc() {
         this.makeRandomMove()
-        this.timer()
+        this.props.pcLoading(false)
+        if (this.props.gameMode === 0) {
+            this.props.pcLoading(true)
+            this.timer()
+        }
+        console.log("pcVpc")
     }
 
     makeRandomMove() {
-        var possibleMoves = this.game.moves()
+        var possibleMoves = game.moves()
 
         // game over
-        if (this.game.game_over() === true || this.game.in_draw() === true || possibleMoves.length === 0) return
+        if (game.game_over() === true || game.in_draw() === true || possibleMoves.length === 0) return
         console.log(possibleMoves)
         var randomIndex = Math.floor(Math.random() * possibleMoves.length)
-        this.game.move(possibleMoves[randomIndex])
+        game.move(possibleMoves[randomIndex])
         // this.setState(({ history, pieceSquare }) => ({
-        //     fen: this.game.fen(),
-        //     history: this.game.history({ verbose: true }),
+        //     fen: game.fen(),
+        //     history: game.history({ verbose: true }),
         //     squareStyles: squareStyling({ pieceSquare, history }),
         //     gameStatus: this.gameOverType(),
         // }))
-        this.setState({ fen: this.game.fen() })
+        this.updateBoard()
+
+        // this.setState({ fen: game.fen() })
     }
 
     // useImperativeHandle(this.props.ref, () => ({
@@ -314,31 +343,216 @@ class HumanVsHuman extends Component {
 
     gameOverType = () => {
         let gameState
-        if (this.game.game_over()) {
-            if (this.game.in_checkmate()) {
-                if (this.game.turn() === "w") {
+        if (game.game_over()) {
+            if (game.in_checkmate()) {
+                if (game.turn() === "w") {
                     gameState = "Checkmate - Black Wins" //checkmate logic
                 } else gameState = "Checkmate - White Wins"
-            } else if (this.game.in_draw()) {
-                if (this.game.in_stalemate()) {
-                    if (this.game.turn() === "w") {
+            } else if (game.in_draw()) {
+                if (game.in_stalemate()) {
+                    if (game.turn() === "w") {
                         gameState = "White's Move - Stalemate" // stalemate logic
                     } else gameState = "Black's Move - Stalemate"
-                } else if (this.game.insufficient_material()) {
+                } else if (game.insufficient_material()) {
                     gameState = "Draw - Insufficient Material"
                 }
             }
-        } else if (this.game.in_check()) {
-            if (this.game.turn() === "w") {
+        } else if (game.in_check()) {
+            if (game.turn() === "w") {
                 gameState = "White's Move (in check)"
             } else gameState = "Black's Move (in check)"
         } else {
-            if (this.game.turn() === "w") {
+            if (game.turn() === "w") {
                 gameState = "White's Move"
             } else gameState = "Black's Move"
         }
 
         return gameState
+    }
+
+    // Stockfish
+
+    engineGame = (options) => {
+        options = options || {}
+
+        /// We can load Stockfish via Web Workers or via STOCKFISH() if loaded from a <script> tag.
+        let engine = typeof STOCKFISH === "function" ? STOCKFISH() : new Worker(options.stockfishjs || "stockfish.js")
+        let evaler = typeof STOCKFISH === "function" ? STOCKFISH() : new Worker(options.stockfishjs || "stockfish.js")
+        let engineStatus = {}
+        let time = { wtime: 3000, btime: 3000, winc: 1500, binc: 1500 }
+        let playerColor = this.props.boardOrientation
+        let clockTimeoutID = null
+        // let isEngineRunning = false;
+        let announced_game_over
+        // do not pick up pieces if the game is over
+        // only pick up pieces for White
+
+        setInterval(function () {
+            if (announced_game_over) {
+                return
+            }
+
+            if (game.game_over()) {
+                announced_game_over = true
+            }
+        }, 500)
+
+        function uciCmd(cmd, which) {
+            // console.log('UCI: ' + cmd);
+
+            ;(which || engine).postMessage(cmd)
+        }
+        uciCmd("uci")
+
+        function clockTick() {
+            let t = (time.clockColor === "white" ? time.wtime : time.btime) + time.startTime - Date.now()
+            let timeToNextSecond = (t % 1000) + 1
+            clockTimeoutID = setTimeout(clockTick, timeToNextSecond)
+        }
+
+        function stopClock() {
+            if (clockTimeoutID !== null) {
+                clearTimeout(clockTimeoutID)
+                clockTimeoutID = null
+            }
+            if (time.startTime > 0) {
+                let elapsed = Date.now() - time.startTime
+                time.startTime = null
+                if (time.clockColor === "white") {
+                    time.wtime = Math.max(0, time.wtime - elapsed)
+                } else {
+                    time.btime = Math.max(0, time.btime - elapsed)
+                }
+            }
+        }
+
+        function startClock() {
+            if (game.turn() === "w") {
+                time.wtime += time.winc
+                time.clockColor = "white"
+            } else {
+                time.btime += time.binc
+                time.clockColor = "black"
+            }
+            time.startTime = Date.now()
+            clockTick()
+        }
+
+        function get_moves() {
+            let moves = ""
+            let history = game.history({ verbose: true })
+
+            for (let i = 0; i < history.length; ++i) {
+                let move = history[i]
+                moves += " " + move.from + move.to + (move.promotion ? move.promotion : "")
+            }
+
+            return moves
+        }
+
+        const prepareMove = () => {
+            stopClock()
+            // this.setState({ fen: game.fen() });
+            let turn = game.turn() === "w" ? "white" : "black"
+            if (!game.game_over()) {
+                // if (turn === playerColor) {
+                if (turn !== playerColor) {
+                    // playerColor = playerColor === 'white' ? 'black' : 'white';
+                    uciCmd("position startpos moves" + get_moves())
+                    uciCmd("position startpos moves" + get_moves(), evaler)
+                    uciCmd("eval", evaler)
+
+                    if (time && time.wtime) {
+                        uciCmd("go " + (time.depth ? "depth " + time.depth : "") + " wtime " + time.wtime + " winc " + time.winc + " btime " + time.btime + " binc " + time.binc)
+                    } else {
+                        uciCmd("go " + (time.depth ? "depth " + time.depth : ""))
+                    }
+                    // isEngineRunning = true;
+                }
+                if (game.history().length >= 2 && !time.depth && !time.nodes) {
+                    startClock()
+                }
+            }
+            this.updateBoard()
+        }
+
+        evaler.onmessage = function (event) {
+            let line
+
+            if (event && typeof event === "object") {
+                line = event.data
+            } else {
+                line = event
+            }
+
+            // console.log('evaler: ' + line);
+
+            /// Ignore some output.
+            if (line === "uciok" || line === "readyok" || line.substr(0, 11) === "option name") {
+                return
+            }
+        }
+
+        engine.onmessage = (event) => {
+            let line
+
+            if (event && typeof event === "object") {
+                line = event.data
+            } else {
+                line = event
+            }
+            // console.log('Reply: ' + line);
+            if (line === "uciok") {
+                engineStatus.engineLoaded = true
+            } else if (line === "readyok") {
+                engineStatus.engineReady = true
+            } else {
+                let match = line.match(/^bestmove ([a-h][1-8])([a-h][1-8])([qrbn])?/)
+                /// Did the AI move?
+                if (match) {
+                    // isEngineRunning = false;
+                    game.move({ from: match[1], to: match[2], promotion: match[3] })
+                    this.setState({ fen: game.fen() })
+                    prepareMove()
+                    uciCmd("eval", evaler)
+                    //uciCmd("eval");
+                    /// Is it sending feedback?
+                } else if ((match = line.match(/^info .*\bdepth (\d+) .*\bnps (\d+)/))) {
+                    engineStatus.search = "Depth: " + match[1] + " Nps: " + match[2]
+                }
+
+                /// Is it sending feed back with a score?
+                if ((match = line.match(/^info .*\bscore (\w+) (-?\d+)/))) {
+                    let score = parseInt(match[2], 10) * (game.turn() === "w" ? 1 : -1)
+                    /// Is it measuring in centipawns?
+                    if (match[1] === "cp") {
+                        engineStatus.score = (score / 100.0).toFixed(2)
+                        /// Did it find a mate?
+                    } else if (match[1] === "mate") {
+                        engineStatus.score = "Mate in " + Math.abs(score)
+                    }
+
+                    /// Is the score bounded?
+                    if ((match = line.match(/\b(upper|lower)bound\b/))) {
+                        engineStatus.score = ((match[1] === "upper") === (game.turn() === "w") ? "<= " : ">= ") + engineStatus.score
+                    }
+                }
+            }
+            // displayStatus();
+        }
+        return {
+            start: function () {
+                uciCmd("ucinewgame")
+                uciCmd("isready")
+                engineStatus.engineReady = false
+                engineStatus.search = null
+                prepareMove()
+                announced_game_over = false
+            },
+            prepareMove: function () {
+                prepareMove()
+            },
+        }
     }
 
     sendGameState = () => {
@@ -376,6 +590,7 @@ export default function WithMoveValidation(props) {
     const [selectPiecePromotion, setSelectPiecePromotion] = useState(false)
     const [promoteType, setpromoteType] = useState("q")
     const [boardOrientation, setboardOrientation] = useState("white")
+    const [pcLoading, setpcLoading] = useState(false)
 
     const setGameState_callbackFunction = (childData) => {
         setGameState(childData)
@@ -433,6 +648,7 @@ export default function WithMoveValidation(props) {
         <div>
             <div>
                 <button
+                    className={gameMode === 0 ? "active" : ""}
                     onClick={() => {
                         setgameMode(0)
                     }}
@@ -440,6 +656,7 @@ export default function WithMoveValidation(props) {
                     PC vs PC
                 </button>
                 <button
+                    className={gameMode === 1 ? "active" : ""}
                     onClick={() => {
                         setgameMode(1)
                     }}
@@ -447,6 +664,7 @@ export default function WithMoveValidation(props) {
                     PC vs Human
                 </button>
                 <button
+                    className={gameMode === 2 ? "active" : ""}
                     onClick={() => {
                         setgameMode(2)
                     }}
@@ -462,6 +680,10 @@ export default function WithMoveValidation(props) {
                     togglePromote={togglePromotionPopup}
                     showModalTest={showModal}
                     promoteType={promoteType}
+                    pcLoading={(bool) => {
+                        setpcLoading(bool)
+                    }}
+                    boardOrientation={boardOrientation}
                 >
                     {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
                         <Chessboard
@@ -487,7 +709,7 @@ export default function WithMoveValidation(props) {
             </div>
             <div>
                 <h1>{gameState}</h1>
-
+                {pcLoading && <div class='spinner-border'></div>}
                 <div className='btn'>
                     <button
                         onClick={() => {
