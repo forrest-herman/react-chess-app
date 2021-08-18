@@ -52,6 +52,12 @@ class HumanVsHuman extends Component {
             setTimeout(() => this.pcVpc(), 2000)
         } else {
             window.clearTimeout(this.timer())
+            console.log("test")
+            if (prevState.gameModeTracker !== prevProps.gameMode) {
+                this.setState({
+                    gameModeTracker: this.props.gameMode,
+                })
+            }
         }
     }
 
@@ -286,7 +292,8 @@ class HumanVsHuman extends Component {
 
     pcVpc() {
         this.makeRandomMove()
-        this.timer()
+        if (this.props.gameMode === 0) this.timer()
+        console.log("pcVpc")
     }
 
     makeRandomMove() {
@@ -433,6 +440,7 @@ export default function WithMoveValidation(props) {
         <div>
             <div>
                 <button
+                    className={gameMode === 0 ? "active" : ""}
                     onClick={() => {
                         setgameMode(0)
                     }}
@@ -440,6 +448,7 @@ export default function WithMoveValidation(props) {
                     PC vs PC
                 </button>
                 <button
+                    className={gameMode === 1 ? "active" : ""}
                     onClick={() => {
                         setgameMode(1)
                     }}
@@ -447,6 +456,7 @@ export default function WithMoveValidation(props) {
                     PC vs Human
                 </button>
                 <button
+                    className={gameMode === 2 ? "active" : ""}
                     onClick={() => {
                         setgameMode(2)
                     }}
