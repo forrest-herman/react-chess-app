@@ -292,7 +292,11 @@ class HumanVsHuman extends Component {
 
     pcVpc() {
         this.makeRandomMove()
-        if (this.props.gameMode === 0) this.timer()
+        this.props.pcLoading(false)
+        if (this.props.gameMode === 0) {
+            this.props.pcLoading(true)
+            this.timer()
+        }
         console.log("pcVpc")
     }
 
@@ -310,7 +314,9 @@ class HumanVsHuman extends Component {
         //     squareStyles: squareStyling({ pieceSquare, history }),
         //     gameStatus: this.gameOverType(),
         // }))
-        this.setState({ fen: this.game.fen() })
+        this.updateBoard()
+
+        // this.setState({ fen: this.game.fen() })
     }
 
     // useImperativeHandle(this.props.ref, () => ({
@@ -383,6 +389,7 @@ export default function WithMoveValidation(props) {
     const [selectPiecePromotion, setSelectPiecePromotion] = useState(false)
     const [promoteType, setpromoteType] = useState("q")
     const [boardOrientation, setboardOrientation] = useState("white")
+    const [pcLoading, setpcLoading] = useState(false)
 
     const setGameState_callbackFunction = (childData) => {
         setGameState(childData)
@@ -472,6 +479,9 @@ export default function WithMoveValidation(props) {
                     togglePromote={togglePromotionPopup}
                     showModalTest={showModal}
                     promoteType={promoteType}
+                    pcLoading={(bool) => {
+                        setpcLoading(bool)
+                    }}
                 >
                     {({ width, position, onDrop, onMouseOverSquare, onMouseOutSquare, squareStyles, dropSquareStyle, onDragOverSquare, onSquareClick, onSquareRightClick }) => (
                         <Chessboard
@@ -497,7 +507,7 @@ export default function WithMoveValidation(props) {
             </div>
             <div>
                 <h1>{gameState}</h1>
-
+                {pcLoading && <div class='spinner-border'></div>}
                 <div className='btn'>
                     <button
                         onClick={() => {
