@@ -3,14 +3,18 @@
 ### Todo:
 
 -   [x] add checkmate detection and text to display checkmate type
+-   [ ] rotate board
+-   [ ] loader while computer is thinking
 -   [ ] recent move highlight covers yellow circles to show possible moves
 -   [ ] can't select squares without pieces
 -   [ ] auto highlight move upon click - remove delay
 -   [ ] pawn promotion - make promote wait for choice selection (right now it takes previous selection)
 -   [ ] mode toggles aren't instantaneous
 -   [ ] forward and back arrows
+-   [ ] undo Move with stockfish engine --> when playing vs computer make undo go back 2 moves
 -   [ ] UI design - mode icons colour white and black
 -   [ ] show move history
+-   [ ] mobile touch action none for drag on mobile
 -   [ ] host on Heroku
 
 <br>
