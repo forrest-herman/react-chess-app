@@ -3,9 +3,15 @@
 ### Todo:
 
 -   [x] add checkmate detection and text to display checkmate type
--   [ ] this is an incomplete item
--   [ ] this is an incomplete item
--   [ ] this is an incomplete item
+-   [ ] recent move highlight covers yellow circles to show possible moves
+-   [ ] can't select squares without pieces
+-   [ ] auto highlight move upon click - remove delay
+-   [ ] pawn promotion - make promote wait for choice selection (right now it takes previous selection)
+-   [ ] mode toggles aren't instantaneous
+-   [ ] forward and back arrows
+-   [ ] UI design - mode icons colour white and black
+-   [ ] show move history
+-   [ ] host on Heroku
 
 <br>
 
