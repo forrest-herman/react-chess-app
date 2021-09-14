@@ -2,6 +2,9 @@
 
 ### Todo:
 
+-   [x] add checkmate detection and text to display checkmate type
+-   [ ] this is an incomplete item
+-   [ ] this is an incomplete item
 -   [ ] this is an incomplete item
 
 <br>
