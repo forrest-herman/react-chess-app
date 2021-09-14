@@ -1,10 +1,10 @@
 # Welcome to this chess app - Work in Progress
 
-Todo:
+###Todo:
 
--   Test
+-   [ ] this is an incomplete item
 
-[ ] this is an incomplete item
+\
 
 # Getting Started with Create React App
 
