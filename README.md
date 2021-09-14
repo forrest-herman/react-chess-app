@@ -1,3 +1,11 @@
+# Welcome to this chess app - Work in Progress
+
+Todo:
+
+-   Test
+
+*   [ ] this is an incomplete item
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
